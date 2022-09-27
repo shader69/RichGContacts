@@ -69,7 +69,7 @@ def main():
 
             if process["success"] is False:
                 if process["error"] == "user_not_found":
-                    print(f"\u001b[33mWarning: user '{user['display_name']}' was not found. Please check this user name.\u001b[0m")
+                    print(f"\u001b[33mWarning: contact '{user['display_name']}' was not found. Please check this user name.\u001b[0m")
                 else:
                     print("\u001b[31mError: an error occurred. Please retry later.\u001b[0m")
             else:
