@@ -62,7 +62,7 @@ def main():
             obj = Social(network["network_name"], network["user_name"])
 
             # Get profile picture for this user
-            process = obj.get_profile_picture()
+            process = obj.download_profile_picture()
 
             # Init colorama again, because some packages reset it
             colorama.init()

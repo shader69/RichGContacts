@@ -11,6 +11,30 @@ class Social:
     """
     Create an object associated to a social network.
     Use it to return profile picture for a user.
+
+    Attributes
+    ----------
+    network_name : string
+        Name of the network
+    user_name : string
+        Name of the user, for this network
+    ig : object of Instaloader class
+        Only used if network_name = 'instagram'
+
+    Methods
+    -------
+    is_managed(network_name)
+        Check if wanted social network is managed.
+    download_profile_picture()
+        Redirect to another function, using the network name.
+    download_profile_picture__instagram()
+        Use Instaloader, to get an Instagram profile picture.
+    download_profile_picture__facebook()
+        Use facebook-scraper, to get a Facebook profile picture.
+    get_profile_pictures(get_only_last)
+        Return downloaded image, for a specific user and social network, order by modified date DESC.
+    delete_duplicated_image()
+        Check if the last downloaded image is identical to the previous one, and delete it if it's true.
     """
 
     # Managed social networks
@@ -41,21 +65,19 @@ class Social:
 
         return network_name in cls.NETWORKS
 
-    def get_profile_picture(self):
+    def download_profile_picture(self):
         """
         Only redirect to the correct function, using the network name.
-        :return:
+        :return: dict - success of the process
         """
 
-        # Redirect, using self.name
-        if self.network_name == "instagram":
-            return self.get_profile_picture__instagram()
-        elif self.network_name == "facebook":
-            return self.get_profile_picture__facebook()
-        else:
+        if self.network_name not in self.NETWORKS:
             exit("Not managed network.")
 
-    def get_profile_picture__instagram(self):
+        # Redirect, using self.network_name
+        return eval('self.download_profile_picture__'+self.network_name+'()')
+
+    def download_profile_picture__instagram(self):
         """
         Use Instaloader to get profile picture
         :return: string - image path
@@ -109,7 +131,7 @@ class Social:
                 "error": "unmatched",
             }
 
-    def get_profile_picture__facebook(self):
+    def download_profile_picture__facebook(self):
         return {
             "success": False,
             "error": "unmatched",
