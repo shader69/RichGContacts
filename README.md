@@ -5,7 +5,7 @@ RichGContacts is a tool that allow you to synchronize social networks data with 
 
 ### Managed social networks :
 - Instagram
-- Facebook (not working yet)
+- Facebook
 
 ## 💡 Prerequisite
 - [Python 3](https://www.python.org/downloads/release/python-370/)
@@ -31,6 +31,8 @@ python3 setup.py install
 - Go to your [contacts list](https://contacts.google.com/), with the Google Account to use.
 - Choose a contact to manage.
 - In your contact data, go on **Instant messages** section, and add a field for each social network you want to sync.
+  - **Instagram**: set username in the field
+  - **Facebook**: set username in the field (for find it : go on Facebook website, open user profile, and get it in URL)
 - Try to execute the script: the first run will open a web window. You need to accept the conditions to using the script. After that, the _token.json_ file will be automatically created.
 
 ## 📚 Usage:

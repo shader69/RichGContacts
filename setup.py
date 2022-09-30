@@ -6,7 +6,7 @@ setup(
     version="1.0",
     packages=find_packages(),
     author="shader69",
-    install_requires=["google", "google_auth_oauthlib", "google-api-python-client", "colorama", "requests", "instaloader"],
+    install_requires=["google", "google_auth_oauthlib", "google-api-python-client", "colorama", "requests", "instaloader", "facebook-scraper", "Pillow"],
     description="ToFill",
     long_description="ToFill",
     include_package_data=True,

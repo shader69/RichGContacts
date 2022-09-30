@@ -1,8 +1,17 @@
 import glob
 import sys
+from os.path import exists
+from datetime import datetime
 
 import instaloader
 from instaloader import Profile, ProfileNotExistsException
+
+from facebook_scraper import get_profile
+import requests
+from requests import HTTPError
+import warnings
+
+from PIL import Image
 
 from project.globals import *
 
@@ -126,10 +135,117 @@ class Social:
             }
 
     def download_profile_picture__facebook(self):
-        return {
-            "success": False,
-            "error": "unmatched",
-        }
+        """
+        Use facebook-scraper, to get a Facebook profile picture.
+        :return: string - image path
+        """
+
+        try:
+
+            # Disable module warnings
+            warnings.filterwarnings('ignore')
+            # warnings.simplefilter('ignore')
+
+            # Disable print return
+            # sys.stdout = open(os.devnull, 'w')
+            # sys.stderr = open(os.devnull, 'w')
+
+            # Use facebook-scraper, for trying to get user data
+            profile_data = get_profile(self.user_name)
+
+            # Re-activate module warnings
+            warnings.filterwarnings('default')  # TODO : make this working
+            # warnings.simplefilter('default')
+
+            # Enable print return
+            # sys.stdout = sys.__stdout__
+            # sys.stderr = sys.__stderr__
+
+            # If no except, try to get profile picture
+            if not profile_data["profile_picture"]:
+                return {
+                    "success": False,
+                    "error": "picture_not_found",
+                }
+
+            # Get image URL
+            profile_picture_url = profile_data["profile_picture"]
+
+            # Prepare file name to set
+            if len(self.get_profile_pictures(False)):
+                date_to_use = datetime.now()
+            else:
+                date_to_use = datetime(1971, 1, 1)
+
+            file_name = date_to_use.strftime("%Y-%m-%d_%H-%M-%S") + '.jpg'
+
+            file_date = round(date_to_use.timestamp())
+
+            # Prepare file path
+            folder_path = os.path.join(userdata_path, self.network_name)
+            folder_path = os.path.join(folder_path, self.user_name)
+            file_path = os.path.join(folder_path, file_name)
+
+            # Create folder if not exist
+            if not os.path.exists(folder_path):
+                os.makedirs(os.path.join(folder_path))
+
+            # Create an empty file
+            if not exists(file_path):
+
+                with open(file_path, 'wb') as handle:
+
+                    # Get image content
+                    response = requests.get(profile_picture_url, stream=True)
+
+                    if not response.ok:
+                        print(response)
+
+                    # Fill the empty file with image content
+                    for block in response.iter_content(1024):
+                        if not block:
+                            break
+
+                        handle.write(block)
+
+                # Set file dates (first parameter is atime, and second is mtime)
+                os.utime(file_path, (file_date, file_date))
+
+            # Delete this image if it's the same as the previous
+            self.delete_duplicated_image()
+
+            # If no errors, get last image path
+            image_path = self.get_profile_pictures()
+
+            # Return latest image
+            return {
+                "success": True,
+                "error": None,
+                "image_path": image_path,
+            }
+
+        except HTTPError as err:
+            if '404' in str(err):
+                return {
+                    "success": False,
+                    "error": "user_not_found",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "http_error",
+                }
+        except Exception as err:
+            if '(cookies) is required' in str(err):
+                return {
+                    "success": False,
+                    "error": "user_private",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": str(err),
+                }
 
     def get_profile_pictures(self, get_only_last=True):
         """
@@ -160,3 +276,22 @@ class Social:
             return []
         else:
             return None
+
+    def delete_duplicated_image(self):
+        """
+        Check if the last downloaded image is identical to the previous one, and delete it if it's true.
+        :return: void
+        """
+
+        # Get image path
+        images = self.get_profile_pictures(False)
+
+        if len(images) < 2:
+            return
+
+        im1 = Image.open(images[0])
+        im2 = Image.open(images[1])
+
+        # If images are identical, we delete the last one
+        if list(im1.getdata()) == list(im2.getdata()):
+            os.remove(images[0])
