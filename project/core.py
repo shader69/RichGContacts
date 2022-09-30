@@ -39,8 +39,7 @@ def main():
 
         print(f'Contact "{user["display_name"]}"')
 
-        # Define which is the best image to use # TODO : better way to determine which is best image to use
-        image_path = None
+        images_path = []
 
         # Loop on each social networks
         for network in user["networks"]:
@@ -48,14 +47,13 @@ def main():
             # At first, check if this social network is managed
             is_managed = Social.is_managed(network["network_name"])
 
+            # Show network name and user name
             string = f'    {network["network_name"]} : {network["user_name"]}'
-            if not is_managed:
-                string = string + ' \u001b[31m(not managed)\u001b[0m'
-
-            print(string)
+            print(f'{string}', end="\r")
 
             # At first, check if this social network is managed
             if not is_managed:
+                print(f'{string}  \u001b[31m(not managed)\u001b[0m')
                 continue
 
             # Else, instantiate social network object
@@ -69,18 +67,26 @@ def main():
 
             if process["success"] is False:
                 if process["error"] == "user_not_found":
-                    print(f"\u001b[33mWarning: contact '{user['display_name']}' was not found. Please check this user name.\u001b[0m")
+                    print(f"{string}   \u001b[33mWarning: user '{network['user_name']}' was not found. Please check this user name.\u001b[0m")
+                elif process["error"] == "user_private":
+                    print(f"{string}   \u001b[33mWarning: user '{network['user_name']}' is private.\u001b[0m")
                 else:
-                    print("\u001b[31mError: an error occurred. Please retry later.\u001b[0m")
+                    print(f"{string}   \u001b[31mError: {process['error']}\u001b[0m")
             else:
-                image_path = process["image_path"]
+                print(f'{string}   \u001b[32mOK\u001b[0m')
+                images_path.append({"network_name": network["network_name"], "image_path": process["image_path"]})
 
         # Try to update contact profile picture
-        if image_path is not None:
-            result = api.update_contact_photo(image_path, user["resource_name"])
+        if len(images_path):
+
+            # Get the best image to use
+            choosen_image_path = choose_best_image(images_path)
+
+            # Try to update contact profile picture
+            result = api.update_contact_photo(choosen_image_path["image_path"], user["resource_name"])
 
             if len(result):
-                updated_users.append(result)
+                updated_users.append({"api_result": result, "choosen_network": choosen_image_path["network_name"]})
 
     # TODO : better way to show updated users
     print('\n')
@@ -89,7 +95,7 @@ def main():
     print('-' * 15)
 
     for user in updated_users:
-        print(user[0]["displayName"])
+        print(user["api_result"][0]["displayName"]+f'   \u001b[32mChoosen newtork data: {user["choosen_network"]}\u001b[0m')
 
 
 def filter_contacts(connections):
@@ -141,3 +147,19 @@ def filter_contacts(connections):
 
     # Return all formatted users
     return formatted_users
+
+
+def choose_best_image(images_path):
+    """
+    Define which is the best image to use
+    :param images_path: array - array of object, contain images to analyze
+    :return: string - path to chosen image
+    """
+
+    # If there is only one image, return it
+    if len(images_path) == 1:
+        return images_path[0]
+
+    # Else compare the images
+    # TODO : do a real method to determine which is best image to use
+    return images_path[0]
