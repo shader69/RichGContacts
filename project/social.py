@@ -79,45 +79,39 @@ class Social:
 
     def download_profile_picture__instagram(self):
         """
-        Use Instaloader to get profile picture
+        Use Instaloader, to get an Instagram profile picture.
         :return: string - image path
         """
 
         try:
 
+            # Prepare file path
+            folder_path = os.path.join(userdata_path, self.network_name)
+            folder_path = os.path.join(folder_path, '{target}')
+
             # Init Instaloader
-            self.ig = instaloader.Instaloader(dirname_pattern=userdata_path + '{target}/instagram')
+            self.ig = instaloader.Instaloader(dirname_pattern=folder_path, quiet=True)
+
+            # Overwrite function, for disable print errors
+            def nothing(msg, repeat_at_end=True):
+                pass
+            self.ig.context.error = nothing
 
             # Instantiate instaloader.Profile class
             user_profile = Profile.from_username(self.ig.context, self.user_name)
-
-            # Disable print return
-            sys.stdout = open(os.devnull, 'w')
 
             # Download image to 'user data' folder
             # self.ig.download_profile(user_name, profile_pic_only=True)
             self.ig.download_profilepic(user_profile)
 
-            # Enable print return
-            sys.stdout = sys.__stdout__
-
-            # If no errors, get image path
-            image_path = os.path.join(userdata_path, self.user_name+'/instagram/')
-
-            # Filter only images
-            files = glob.glob(image_path + '/*.jpg')
-
-            # Order files by modified date ASC
-            paths = sorted(files, key=os.path.getmtime)
-
-            # Reverse array
-            paths.reverse()
+            # If no errors, get downloaded image path
+            image_path = self.get_profile_pictures()
 
             # Return latest image
             return {
                 "success": True,
                 "error": None,
-                "image_path": paths[0],
+                "image_path": image_path,
             }
 
         except ProfileNotExistsException:
@@ -125,10 +119,10 @@ class Social:
                 "success": False,
                 "error": "user_not_found",
             }
-        except:
+        except Exception as err:
             return {
                 "success": False,
-                "error": "unmatched",
+                "error": str(err),
             }
 
     def download_profile_picture__facebook(self):
@@ -136,3 +130,33 @@ class Social:
             "success": False,
             "error": "unmatched",
         }
+
+    def get_profile_pictures(self, get_only_last=True):
+        """
+        Return downloaded image, for a specific user and social network, order by modified date DESC.
+        :param get_only_last: bool - return only last images, or all images
+        :return: array|string - contains image path
+        """
+
+        # Get image path
+        image_path = os.path.join(userdata_path, self.network_name)
+        image_path = os.path.join(image_path, self.user_name)
+
+        # Filter only images
+        files = glob.glob(image_path + '/*.jpg')
+
+        # Order files by modified date ASC
+        paths = sorted(files, key=os.path.getmtime)
+
+        # Reverse array
+        paths.reverse()
+
+        # Return latest image
+        if len(paths) and get_only_last is True:
+            return paths[0]
+        elif len(paths) and get_only_last is False:
+            return paths
+        elif not len(paths) and get_only_last is False:
+            return []
+        else:
+            return None
