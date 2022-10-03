@@ -11,7 +11,7 @@ setup(
     long_description="ToFill",
     include_package_data=True,
     url='https://github.com/shader69/RichGContacts',
-    entry_points={'console_scripts': ['richgcontacts = project.__main__:main_for_setup']},
+    entry_points={'console_scripts': ['richgcontacts = richgcontacts.__main__:main_for_setup']},
     classifiers=[
         "Programming Language :: Python",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

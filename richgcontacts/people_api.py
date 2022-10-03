@@ -9,7 +9,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from project.globals import *
+from richgcontacts.globals import *
 
 
 class PeopleApi:
@@ -71,7 +71,7 @@ class PeopleApi:
 
         # Check if credentials file exist
         if not os.path.exists(self.credentials_path):
-            exit("Error: missing Google People API 'credentials.json' file. Read the README to get this file, and set it in 'RichGContacts/project/data/'.")
+            exit("Error: missing Google People API 'credentials.json' file. Read the README to get this file, and set it in 'RichGContacts/richgcontacts/data/'.")
 
         # The file token.json stores the user's access and refresh tokens, and is created automatically when the
         # authorization flow completes for the first time.

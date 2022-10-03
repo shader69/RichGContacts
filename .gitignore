@@ -1,6 +1,6 @@
 # Project files
-project/data
-project/userdata
+richgcontacts/data
+richgcontacts/userdata
 
 # Python files
 build

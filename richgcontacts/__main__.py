@@ -1,6 +1,6 @@
 # /!\ This file called by setup.py only /!\
 
-from project.core import *
+from richgcontacts.core import *
 
 
 # Execute main function from setup.py

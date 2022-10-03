@@ -1,6 +1,6 @@
 # /!\ Please use this file for development only /!\
 
-from project.core import *
+from richgcontacts.core import *
 
 
 # Execute main function from development tool

@@ -44,5 +44,5 @@ richgcontacts
 
 ### Or in Windows CMD
 ```
-python3 project/demo.py
+python3 richgcontacts/demo.py
 ```

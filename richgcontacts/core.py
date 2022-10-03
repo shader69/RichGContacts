@@ -2,9 +2,9 @@ from __future__ import print_function
 
 import colorama
 
-from project.people_api import PeopleApi
+from richgcontacts.people_api import PeopleApi
 
-from project.social import Social
+from richgcontacts.social import Social
 
 
 def main():

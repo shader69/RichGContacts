@@ -13,7 +13,7 @@ import warnings
 
 from PIL import Image
 
-from project.globals import *
+from richgcontacts.globals import *
 
 
 class Social:
