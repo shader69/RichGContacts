@@ -143,8 +143,8 @@ class Social:
         try:
 
             # Disable module warnings
+            old_warnings_filters = warnings.filters
             warnings.filterwarnings('ignore')
-            # warnings.simplefilter('ignore')
 
             # Disable print return
             # sys.stdout = open(os.devnull, 'w')
@@ -154,8 +154,7 @@ class Social:
             profile_data = get_profile(self.user_name)
 
             # Re-activate module warnings
-            warnings.filterwarnings('default')  # TODO : make this working
-            # warnings.simplefilter('default')
+            warnings.filters = old_warnings_filters
 
             # Enable print return
             # sys.stdout = sys.__stdout__
