@@ -48,12 +48,11 @@ def main():
             is_managed = Social.is_managed(network["network_name"])
 
             # Show network name and user name
-            string = f'    {network["network_name"]} : {network["user_name"]}'
-            print(f'{string}', end="\r")
+            print(f'    {network["network_name"]} : {network["user_name"]}', end="")
 
             # At first, check if this social network is managed
             if not is_managed:
-                print(f'{string}  \u001b[31m(not managed)\u001b[0m')
+                print('  \u001b[31m(not managed)\u001b[0m')
                 continue
 
             # Else, instantiate social network object
@@ -67,13 +66,13 @@ def main():
 
             if process["success"] is False:
                 if process["error"] == "user_not_found":
-                    print(f"{string}   \u001b[33mWarning: user '{network['user_name']}' was not found. Please check this user name.\u001b[0m")
+                    print(f"   \u001b[33mWarning: user '{network['user_name']}' was not found. Please check this user name.\u001b[0m")
                 elif process["error"] == "user_private":
-                    print(f"{string}   \u001b[33mWarning: user '{network['user_name']}' is private.\u001b[0m")
+                    print(f"   \u001b[33mWarning: user '{network['user_name']}' is private.\u001b[0m")
                 else:
-                    print(f"{string}   \u001b[31mError: {process['error']}\u001b[0m")
+                    print(f"   \u001b[31mError: {process['error']}\u001b[0m")
             else:
-                print(f'{string}   \u001b[32mOK\u001b[0m')
+                print('   \u001b[32mOK\u001b[0m')
                 images_path.append({"network_name": network["network_name"], "image_path": process["image_path"]})
 
         # Try to update contact profile picture
