@@ -45,5 +45,8 @@ main()
 
 ### Or in terminal
 ```bash
+richgcontacts
+```
+```bash
 python richgcontacts/demo.py
 ```
