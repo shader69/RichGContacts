@@ -87,13 +87,15 @@ class PeopleApi:
                 except Exception as err:
 
                     # If an error occurred in "refresh token"
-                    if "('invalid_grant: Bad Request', {'error': 'invalid_grant'" in str(err):
+                    if "('invalid_grant: Bad Request', {'error': 'invalid_grant'" in str(err)\
+                            or "('invalid_grant: Token has been expired or revoked.', {'error': 'invalid_grant'" in str(err):
 
                         # Delete token file
                         os.remove(self.token_path)
 
-                        # Re-run connect_api() function
-                        self.connect_api()
+                        # Init user login
+                        flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, self.SCOPES)
+                        self.creds = flow.run_local_server(port=0)
 
                     else:
 
@@ -101,6 +103,8 @@ class PeopleApi:
                         exit(f'Error on refreshing Google API token: {str(err)}')
 
             else:
+
+                # Init user login
                 flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, self.SCOPES)
                 self.creds = flow.run_local_server(port=0)
 
