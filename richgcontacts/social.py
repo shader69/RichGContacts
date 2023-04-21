@@ -7,6 +7,7 @@ import instaloader
 from instaloader import Profile, ProfileNotExistsException
 
 from facebook_scraper import get_profile
+
 import requests
 from requests import HTTPError
 import warnings
@@ -27,8 +28,6 @@ class Social:
         Name of the network
     user_name : string
         Name of the user, for this network
-    ig : object of Instaloader class
-        Only used if network_name = 'instagram'
 
     Methods
     -------
@@ -49,6 +48,9 @@ class Social:
     # Managed social networks
     NETWORKS = ["instagram", "facebook"]
 
+    # Instantiate external packages (only one time)
+    IG = None
+
     def __init__(self, network_name, user_name):
         """
         Init the social network object.
@@ -64,6 +66,9 @@ class Social:
         self.network_name = network_name
         self.user_name = user_name
 
+        # Instantiate other packages if necessary
+        self.instantiate_external_package()
+
     @classmethod
     def is_managed(cls, network_name):
         """
@@ -73,6 +78,53 @@ class Social:
         """
 
         return network_name in cls.NETWORKS
+
+    def instantiate_external_package(self):
+        """
+        Only redirect to the correct function, using the network name.
+        :return: dict - success of the process
+        """
+
+        if self.network_name not in self.NETWORKS:
+            exit("Not managed network.")
+
+        # Redirect, using self.network_name
+        return eval('self.instantiate_external_package__'+self.network_name+'()')
+
+    def instantiate_external_package__instagram(self):
+        """
+        Instantiate "instaloader" package
+        """
+
+        # Do not process if object has already been instantiated
+        if Social.IG is not None:
+            return
+
+        try:
+            # Prepare file path
+            folder_path = os.path.join(userdata_path, self.network_name)
+            folder_path = os.path.join(folder_path, '{target}')
+
+            # Init Instaloader
+            Social.IG = instaloader.Instaloader(dirname_pattern=folder_path, quiet=True)
+
+            # Overwrite function, for disable print errors
+            def nothing(msg, repeat_at_end=True):
+                pass
+            Social.IG.context.error = nothing
+            
+        except Exception as err:
+            return {
+                "success": False,
+                "error": str(err),
+            }
+
+    def instantiate_external_package__facebook(self):
+        """
+        Instantiate "facebook-scrapper" package
+        """
+
+        # Nothing to instantiate
 
     def download_profile_picture(self):
         """
@@ -94,24 +146,12 @@ class Social:
 
         try:
 
-            # Prepare file path
-            folder_path = os.path.join(userdata_path, self.network_name)
-            folder_path = os.path.join(folder_path, '{target}')
-
-            # Init Instaloader
-            self.ig = instaloader.Instaloader(dirname_pattern=folder_path, quiet=True)
-
-            # Overwrite function, for disable print errors
-            def nothing(msg, repeat_at_end=True):
-                pass
-            self.ig.context.error = nothing
-
-            # Instantiate instaloader.Profile class
-            user_profile = Profile.from_username(self.ig.context, self.user_name)
+            # Instantiate instaloader.Profile class, for given user_name
+            user_profile = Profile.from_username(Social.IG.context, self.user_name)
 
             # Download image to 'user data' folder
-            # self.ig.download_profile(user_name, profile_pic_only=True)
-            self.ig.download_profilepic(user_profile)
+            # Social.IG.download_profile(user_name, profile_pic_only=True)
+            Social.IG.download_profilepic(user_profile)
 
             # If no errors, get downloaded image path
             image_path = self.get_profile_pictures()
