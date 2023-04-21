@@ -85,7 +85,14 @@ def main():
             result = api.update_contact_photo(choosen_image_path["image_path"], user["resource_name"])
 
             if len(result):
-                updated_users.append({"api_result": result, "choosen_network": choosen_image_path["network_name"]})
+                updated_users.append(
+                    {
+                        "success": result["success"],
+                        "error": result["error"],
+                        "api_result": result["api_result"],
+                        "choosen_network": choosen_image_path["network_name"],
+                     }
+                )
 
     # TODO : better way to show updated users
     print('\n')
@@ -93,8 +100,16 @@ def main():
     print("Updated contacts")
     print('-' * 15)
 
-    for user in updated_users:
-        print(user["api_result"][0]["displayName"]+f'   \u001b[32mChoosen newtork data: {user["choosen_network"]}\u001b[0m')
+    if not len(updated_users):
+        print('No updated contacts.')
+    else:
+        for user in updated_users:
+
+            # Check if picture has been correctly updated
+            if user["success"]:
+                print(user["api_result"][0]["displayName"]+f'   \u001b[32mChoosen newtork data: {user["choosen_network"]}\u001b[0m')
+            else:
+                print(user["api_result"][0]["displayName"] + f'   \u001b[31mError: {user["error"]}\u001b[0m')
 
 
 def filter_contacts(connections):

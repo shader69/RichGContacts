@@ -150,13 +150,25 @@ class PeopleApi:
             photo_bytes = base64.b64encode(image.read())
 
         # Update actual picture with this new picture
-        results = self.service.people().updateContactPhoto(
-            resourceName=resource_name,
-            body={
-                "photoBytes": photo_bytes.decode('utf-8'),
-                "personFields": "names,photos,imClients"
-            }
-        ).execute()
+        try:
+            results = self.service.people().updateContactPhoto(
+                resourceName=resource_name,
+                body={
+                    "photoBytes": photo_bytes.decode('utf-8'),
+                    "personFields": "names,photos,imClients"
+                }
+            ).execute()
 
-        # Return updated results
-        return results.get('person', []).get('names', [])
+            # Return updated results
+            return {
+                "success": True,
+                "error": None,
+                "api_result": results.get('person', []).get('names', []),
+            }
+
+        except Exception as err:
+            return {
+                "success": False,
+                "error": str(err),
+                "api_result": [{"displayName": resource_name}],
+            }
