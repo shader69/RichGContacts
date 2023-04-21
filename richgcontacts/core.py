@@ -47,7 +47,7 @@ def main():
             # At first, check if this social network is managed
             is_managed = Social.is_managed(network["network_name"])
 
-            # Show network name and user name
+            # Show network name and username
             print(f'    {network["network_name"]} : {network["user_name"]}', end="")
 
             # At first, check if this social network is managed
@@ -142,7 +142,7 @@ def filter_contacts(connections):
 
             for data in contact_imClients_data:
                 networks.append({
-                    "network_name": data["protocol"].lower(),
+                    "network_name": data["protocol"].lower().replace(' ', ''),
                     "user_name": data["username"],
                 })
 
