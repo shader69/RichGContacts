@@ -81,7 +81,25 @@ class PeopleApi:
         # If there are no (valid) credentials available, let the user log in.
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
+
+                try:
+                    self.creds.refresh(Request())
+                except Exception as err:
+
+                    # If an error occurred in "refresh token"
+                    if "('invalid_grant: Bad Request', {'error': 'invalid_grant'" in str(err):
+
+                        # Delete token file
+                        os.remove(self.token_path)
+
+                        # Re-run connect_api() function
+                        self.connect_api()
+
+                    else:
+
+                        # Throw error
+                        exit(f'Error on refreshing Google API token: {str(err)}')
+
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, self.SCOPES)
                 self.creds = flow.run_local_server(port=0)
