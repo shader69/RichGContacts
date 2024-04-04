@@ -10,6 +10,13 @@ from instaloader import Profile, ProfileNotExistsException
 # Facebook
 from facebook_scraper import get_profile
 
+# What's App
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+
 import requests
 from requests import HTTPError
 import warnings
@@ -48,10 +55,11 @@ class Social:
     """
 
     # Managed social networks
-    NETWORKS = ["instagram", "facebook"]
+    NETWORKS = ["instagram", "facebook", "whatsapp"]
 
     # Instantiate external packages (only one time)
     IG = None
+    WA = None
 
     def __init__(self, network_name, user_name):
         """
@@ -130,6 +138,39 @@ class Social:
 
         # Nothing to instantiate
         return
+
+    def instantiate_external_package__whatsapp(self):
+        """
+        Instantiate "selenium" package, open Chrome and wait for the user to log into their account
+        :return: void|dict - void if object has already been instantiated, or dict if there is an error during the process
+        """
+
+        # Do not process if object has already been instantiated
+        if Social.WA is not None:
+            return
+
+        try:
+
+            # Init web browser
+            options = webdriver.ChromeOptions()
+            # options.binary_location = "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe"
+            service = ChromeService()
+            driver = webdriver.Chrome(service=service, options=options)
+
+            # Open 'WhatsApp Web' in Chrome
+            driver.get("https://web.whatsapp.com/")
+
+            # Wait for the user to log into their account
+            input('\n    \u001b[33mLog in to WhatsApp Web manually, then press Enter once the page loads.\u001b[0m')
+
+            # Save Selenium instance
+            Social.WA = driver
+
+        except Exception as err:
+            return {
+                "success": False,
+                "error": str(err),
+            }
 
     def download_profile_picture(self):
         """
@@ -254,6 +295,93 @@ class Social:
                     "success": False,
                     "error": str(err),
                 }
+
+    def download_profile_picture__whatsapp(self):
+        """
+        Use Selenium, to get a What's App account profile picture.
+        :return: dict - success of the process, and image path
+        """
+
+        try:
+
+            # Limit for the number of search attempts
+            max_attempts = 5
+            attempts = 0
+
+            # Declare Selenium var
+            driver = Social.WA
+
+            while attempts < max_attempts:
+                try:
+
+                    # Search for the user's conversation using their phone number
+                    search_box = driver.find_element(By.XPATH, '//div[@title="Champ de recherche"]')
+
+                    # Clear the search field
+                    search_box.clear()
+
+                    # Enter the username in the search field
+                    search_box.send_keys(self.user_name)
+
+                    # Wait for the results to load
+                    time.sleep(2)
+
+                    # Find the conversation, and click on it
+                    conversation = driver.find_element(By.XPATH, '//span[@title="' + self.user_name + '"]')
+                    conversation.click()
+
+                    # Wait for the conversation to load
+                    time.sleep(2)
+
+                    # Find the element containing the profile details, and click on it
+                    profile_container = driver.find_element(By.XPATH, '//div[@title="Détails du profil"]')
+                    profile_container.click()
+
+                    # Wait for the profile to load
+                    time.sleep(2)
+
+                    # Find the element containing the profile picture and retrieve the URL
+                    profile_photo = driver.find_element(By.XPATH, '//div[@class="_aigv _aig-"]').find_element(By.TAG_NAME, 'section').find_element(By.TAG_NAME, 'img')
+                    photo_url = profile_photo.get_attribute('src')
+
+                    # Download photo_url, and store it
+                    photo_path = self.save_profile_picture(photo_url)
+
+                    # Close the browser
+                    # driver.quit()
+
+                    return {
+                        "success": True,
+                        "error": None,
+                        "image_path": photo_path,
+                    }
+
+                except NoSuchElementException:
+
+                    # TODO : Check if the user hasn't logged into their account
+                    # try:
+                    #     # Try to find the element
+                    #     element = driver.find_element(By.CLASS_NAME, 'vsc-initialized')
+                    # except NoSuchElementException:
+                    #     # If the element is not found, that mean there is a problem with page loading
+                    #     raise Exception("page is not loaded correctly")
+
+                    # If no conversation found, reset the search input
+                    reset_search_box_button = driver.find_element(By.XPATH, '//button[@aria-label="Annuler la recherche"]')
+                    reset_search_box_button.click()
+
+                    # Increase attempt, and retry process
+                    attempts += 1
+
+            # If no conversation is found after a certain number of attempts, display an error message
+            raise Exception(f"No conversation found after {max_attempts} attempts for this user.")
+            # driver.quit()
+
+        except Exception as err:
+            return {
+                "success": False,
+                "error": str(err),
+            }
 
     def save_profile_picture(self, photo_url):
         """

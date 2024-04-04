@@ -6,6 +6,7 @@ RichGContacts is a tool that allow you to synchronize social networks data with 
 ### Managed social networks :
 - Instagram
 - Facebook
+- WhatsApp
 
 ## 💡 Prerequisite
 - [Python 3](https://www.python.org/downloads/release/python-370/)
