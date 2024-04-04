@@ -84,7 +84,7 @@ class Social:
     def instantiate_external_package(self):
         """
         Only redirect to the correct function, using the network name.
-        :return: dict - success of the process
+        :return: void|dict - void if object has already been instantiated, or dict if there is an error during the process
         """
 
         if self.network_name not in self.NETWORKS:
@@ -96,6 +96,7 @@ class Social:
     def instantiate_external_package__instagram(self):
         """
         Instantiate "instaloader" package
+        :return: void|dict - void if object has already been instantiated, or dict if there is an error during the process
         """
 
         # Do not process if object has already been instantiated
@@ -124,9 +125,11 @@ class Social:
     def instantiate_external_package__facebook(self):
         """
         Instantiate "facebook-scrapper" package
+        :return: void - nothing to return
         """
 
         # Nothing to instantiate
+        return
 
     def download_profile_picture(self):
         """
@@ -143,7 +146,7 @@ class Social:
     def download_profile_picture__instagram(self):
         """
         Use Instaloader, to get an Instagram profile picture.
-        :return: string - image path
+        :return: dict - success of the process, and image path
         """
 
         try:
@@ -179,7 +182,7 @@ class Social:
     def download_profile_picture__facebook(self):
         """
         Use facebook-scraper, to get a Facebook profile picture.
-        :return: string - image path
+        :return: dict - success of the process, and image path
         """
 
         try:
