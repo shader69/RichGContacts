@@ -3,9 +3,11 @@ import sys
 from os.path import exists
 from datetime import datetime
 
+# Instagram
 import instaloader
 from instaloader import Profile, ProfileNotExistsException
 
+# Facebook
 from facebook_scraper import get_profile
 
 import requests
@@ -200,6 +202,13 @@ class Social:
             # sys.stdout = sys.__stdout__
             # sys.stderr = sys.__stderr__
 
+            # Check if user has been found
+            if profile_data["Name"] == "Contenu introuvable":
+                return {
+                    "success": False,
+                    "error": "user_not_found",
+                }
+
             # If no except, try to get profile picture
             if not profile_data["profile_picture"]:
                 return {
@@ -210,51 +219,8 @@ class Social:
             # Get image URL
             profile_picture_url = profile_data["profile_picture"]
 
-            # Prepare file name to set
-            if len(self.get_profile_pictures(False)):
-                date_to_use = datetime.now()
-            else:
-                date_to_use = datetime(1971, 1, 1)
-
-            file_name = date_to_use.strftime("%Y-%m-%d_%H-%M-%S") + '.jpg'
-
-            file_date = round(date_to_use.timestamp())
-
-            # Prepare file path
-            folder_path = os.path.join(userdata_path, self.network_name)
-            folder_path = os.path.join(folder_path, self.user_name)
-            file_path = os.path.join(folder_path, file_name)
-
-            # Create folder if not exist
-            if not os.path.exists(folder_path):
-                os.makedirs(os.path.join(folder_path))
-
-            # Create an empty file
-            if not exists(file_path):
-
-                with open(file_path, 'wb') as handle:
-
-                    # Get image content
-                    response = requests.get(profile_picture_url, stream=True)
-
-                    if not response.ok:
-                        print(response)
-
-                    # Fill the empty file with image content
-                    for block in response.iter_content(1024):
-                        if not block:
-                            break
-
-                        handle.write(block)
-
-                # Set file dates (first parameter is atime, and second is mtime)
-                os.utime(file_path, (file_date, file_date))
-
-            # Delete this image if it's the same as the previous
-            self.delete_duplicated_image()
-
-            # If no errors, get last image path
-            image_path = self.get_profile_pictures()
+            # Download photo_url, and store it
+            image_path = self.save_profile_picture(profile_picture_url)
 
             # Return latest image
             return {
@@ -285,6 +251,70 @@ class Social:
                     "success": False,
                     "error": str(err),
                 }
+
+    def save_profile_picture(self, photo_url):
+        """
+        Download given image URL, and save it in the correct path.
+        :param photo_url: string - image URl to query
+        :return: string - image path
+        """
+
+        # Prepare file name to set
+        if len(self.get_profile_pictures(False)):
+            date_to_use = datetime.now()
+        else:
+            date_to_use = datetime(1971, 1, 1)
+
+        file_name = date_to_use.strftime("%Y-%m-%d_%H-%M-%S") + '.jpg'
+
+        file_date = date_to_use.timestamp()
+
+        # Prepare file path
+        folder_path = os.path.join(userdata_path, self.network_name)
+        folder_path = os.path.join(folder_path, self.user_name)
+        file_path = os.path.join(folder_path, file_name)
+
+        # Create folder if not exist
+        if not os.path.exists(folder_path):
+            os.makedirs(os.path.join(folder_path))
+
+        # Create an empty file
+        if not exists(file_path):
+
+            # Télécharger la photo de profil
+            response = requests.get(photo_url)
+
+            if response.status_code == 200:
+                with open(file_path, "wb") as f:
+                    f.write(response.content)
+            else:
+                raise Exception("Impossible de télécharger la photo de profil.")
+
+            # with open(file_path, 'wb') as handle:
+            #
+            #     # Get image content
+            #     response = requests.get(photo_url, stream=True)
+            #
+            #     if not response.ok:
+            #         print(response)
+            #
+            #     # Fill the empty file with image content
+            #     for block in response.iter_content(1024):
+            #         if not block:
+            #             break
+            #
+            #         handle.write(block)
+
+            # Set file dates (first parameter is atime, and second is mtime)
+            os.utime(file_path, (file_date, file_date))
+
+        # Delete this image if it's the same as the previous
+        self.delete_duplicated_image()
+
+        # If no errors, get last image path
+        image_path = self.get_profile_pictures()
+
+        return image_path
 
     def get_profile_pictures(self, get_only_last=True):
         """
