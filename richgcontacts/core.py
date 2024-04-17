@@ -1,9 +1,10 @@
 from __future__ import print_function
-
+import os
 import colorama
+from datetime import datetime
+from PIL import Image
 
 from richgcontacts.people_api import PeopleApi
-
 from richgcontacts.social import Social
 
 
@@ -66,11 +67,11 @@ def main():
 
             if process["success"] is False:
                 if process["error"] == "user_not_found":
-                    print(f"   \u001b[33mWarning: user '{network['user_name']}' was not found. Please check this user name.\u001b[0m")
+                    print(f"    \u001b[33mWarning: user '{network['user_name']}' was not found. Please check this user name.\u001b[0m")
                 elif process["error"] == "user_private":
-                    print(f"   \u001b[33mWarning: user '{network['user_name']}' is private.\u001b[0m")
+                    print(f"    \u001b[33mWarning: user '{network['user_name']}' is private.\u001b[0m")
                 else:
-                    print(f"   \u001b[31mError: {process['error']}\u001b[0m")
+                    print(f"    \u001b[31mError: {process['error']}\u001b[0m")
             else:
                 print('   \u001b[32mOK\u001b[0m')
                 images_path.append({"network_name": network["network_name"], "image_path": process["image_path"]})
@@ -163,17 +164,96 @@ def filter_contacts(connections):
     return formatted_users
 
 
-def choose_best_image(images_path):
+def choose_best_image(image_objects):
     """
     Define which is the best image to use
-    :param images_path: array - array of object, contain images to analyze
+    :param image_objects: list - list of dict, contain images to analyze
     :return: string - path to chosen image
     """
 
-    # If there is only one image, return it
-    if len(images_path) == 1:
-        return images_path[0]
+    def get_resolution(path):
+        """
+        Define which is the best image to use
+        :param path: string - path to chosen image
+        :return: void - width, height
+        """
 
-    # Else compare the images
-    # TODO : do a real method to determine which is best image to use
-    return images_path[0]
+        # Open image with PIL
+        with Image.open(path) as img:
+            # Get image resolution
+            width, height = img.size
+        return width, height
+
+    def get_creation_date(path):
+        """
+        Define which is the best image to use
+        :param path: string - path to chosen image
+        :return: string - timestamp
+        """
+
+        # Uses the file's last modification date as the creation date
+        timestamp = os.path.getmtime(path)
+        return datetime.fromtimestamp(timestamp)
+
+    def image_score(image_info):
+        """
+        Define which is the best image to use
+        :param image_info: dict - contain 'network_name' and 'image_path'
+        :return: dict - chosen image info
+        """
+
+        # Extract additional information about the image
+        path = image_info["image_path"]
+
+        size = os.path.getsize(path)
+        resolution = get_resolution(path)
+        creation_date = get_creation_date(path)
+
+        # Score for image size (normalized)
+        size_score = 1 - (size / MAX_SIZE)
+
+        # Score for image resolution (normalized)
+        resolution_score = (resolution[0] * resolution[1]) / (MAX_RESOLUTION[0] * MAX_RESOLUTION[1])
+
+        # Score for image creation date (normalized)
+        creation_date_score = 1 - ((datetime.now() - creation_date).total_seconds() / MAX_AGE_SECONDS)
+
+        # Score for image source
+        is_from_instagram_score = (image_info["network_name"] == "instagram")
+
+        # Combine scores using weighted average
+        total_score = (
+                        (size_weight * size_score + resolution_weight * resolution_score + creation_date_weight * creation_date_score + is_from_instagram_weight * is_from_instagram_score)
+                        / (size_weight + resolution_weight + creation_date_weight + is_from_instagram_weight)
+                    )
+
+        # print("NEW IMAGE : "+path)
+        #
+        # print("size : "+str(size))
+        # print("size_score : "+str(size_score))
+        #
+        # print("resolution : "+str(resolution))
+        # print("resolution_score : "+str(resolution_score))
+        #
+        # print("creation_date : "+str(creation_date))
+        # print("creation_date_score : "+str(creation_date_score))
+        #
+        # print("-------------------------------------")
+
+        return total_score
+
+    # Define maximum values for normalization (by getting max value of each dict in image_objects)
+    MAX_SIZE = max(os.path.getsize(image_info["image_path"]) for image_info in image_objects)
+    MAX_RESOLUTION = max(get_resolution(image_info["image_path"]) for image_info in image_objects)
+    MAX_AGE_SECONDS = (datetime.now() - min(get_creation_date(image_info["image_path"]) for image_info in image_objects)).total_seconds()
+
+    # Define weights for each criterion (if a criteria is more important than another)
+    is_from_instagram_weight = 1
+    size_weight = 1
+    resolution_weight = 2
+    creation_date_weight = 1
+
+    # Sort the image paths based on their scores
+    sorted_paths = sorted(image_objects, key=image_score, reverse=True)
+
+    return sorted_paths[0]  # Return the path with the highest score after sorting
